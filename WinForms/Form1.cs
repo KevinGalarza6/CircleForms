@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Drawing;
+using System.Drawing.Drawing2D;
 using System.Windows.Forms;
 
 namespace WinForms
@@ -27,7 +28,6 @@ namespace WinForms
             _timer.Tick += _timer_Tick;
             _timer.Start();
             _zoom = 1;
-            _mousePosition = new PointF { X = 0, Y = 0 };
             _circle = new Circle() { Position = new PointF { X = 0, Y = 0 }, Radius = 200 };
             _line = new Line() { Start = new PointF { X = 0, Y = 0 }, End = new PointF { X = 200, Y = 200 }, Color = Color.Black };
             _xAxis = new Line()
@@ -64,28 +64,34 @@ namespace WinForms
         private void Form1_Paint(object sender, PaintEventArgs e)
         {
             e.Graphics.TranslateTransform(this.ClientRectangle.Width / 2, this.ClientRectangle.Height / 2);
+            e.Graphics.ScaleTransform(1, -1);
             e.Graphics.ScaleTransform(_zoom, _zoom);
             _xAxis.Draw(e.Graphics);
             _yAxis.Draw(e.Graphics);
-            DrawValues(e.Graphics);
             _circle.Draw(e.Graphics);
             _line.Draw(e.Graphics);
+
+            var transState = e.Graphics.Save();
+            e.Graphics.ScaleTransform(1, -1);
+            DrawValues(e.Graphics);
+            e.Graphics.Restore(transState);
         }
 
         private void DrawValues(Graphics g)
         {
+            var inverseEndLine = new PointF() { X = _line.End.X, Y = _line.End.Y * -1 };
             string format = $"angle = {_angle:0.###} | cos = {_cos:0.###} | sen = {_sin:0.###} | tan = {_tan:0.###}";
 
-            g.DrawString(format, this.Font, Brushes.Red, _line.End);
+            g.DrawString(format, this.Font, Brushes.Red, inverseEndLine);
         }
 
         private void panel1_MouseWheel(object sender, MouseEventArgs e)
         {
-            if (e.Delta > 0 && _zoom + 1 != 0)
+            if (e.Delta > 0 && _zoom * (float)1.25 != 0)
             {
                 _zoom *= (float)1.25;
             }
-            else if (e.Delta < 0 && _zoom - 1 != 0)
+            else if (e.Delta < 0 && _zoom / (float)1.25 != 0)
             {
                 _zoom /= (float)1.25;
             }
